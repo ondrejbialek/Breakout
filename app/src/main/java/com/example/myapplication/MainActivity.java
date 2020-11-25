@@ -4,10 +4,13 @@ import android.app.Activity;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.view.Display;
+import android.view.View;
+import android.widget.Button;
 
 public class MainActivity extends Activity {
 
     BreakoutEngine breakoutEngine;
+    Button button;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -19,7 +22,15 @@ public class MainActivity extends Activity {
         display.getSize(size);
 
         breakoutEngine = new BreakoutEngine(this, size.x, size.y);
-        setContentView(breakoutEngine);
+        setContentView(R.layout.activity_main);
+
+        button = findViewById(R.id.button);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setContentView(breakoutEngine);
+            }
+        });
     }
 
     @Override
