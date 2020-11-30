@@ -6,20 +6,31 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.widget.Toast;
 
 
 class BreakoutEngine extends SurfaceView implements Runnable{
 
     private Thread gameThread = null;
 
+    private SensorManager sensorManager;
+    private Sensor gyroscopeSensor;
+    private SensorEventListener gyroscopeEventListener;
+
     private SurfaceHolder ourHolder;
 
     private volatile boolean playing;
     private boolean completed;
+    private boolean gyroscopeOnOff = false;
+    private boolean changed = false;
 
     private boolean paused = true;
 
@@ -44,6 +55,12 @@ class BreakoutEngine extends SurfaceView implements Runnable{
 
     double sumY = 0;
 
+    int brickSound;
+    int paddleWallSound;
+    int winSound;
+    int loseSound;
+
+
     public BreakoutEngine(Context context, int x, int y) {
 
         super(context);
@@ -54,15 +71,43 @@ class BreakoutEngine extends SurfaceView implements Runnable{
         row = 6;
         col = 7;
         bricksCount = row * col;
+
+        sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
+
+        gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+
+        if (gyroscopeSensor == null) {
+            Toast.makeText(context, "The device has no gyroscope!", Toast.LENGTH_SHORT).show();
+        }
+
+        gyroscopeEventListener = new SensorEventListener() {
+            @Override
+            public void onSensorChanged(SensorEvent event) {
+                if (event.values[2] > 0.5f) {
+
+                    paddle.setDirection(paddle.left);
+
+                } else if (event.values[2] < -0.5f) {
+
+                    paddle.setDirection(paddle.right);
+
+                }
+            }
+
+            @Override
+            public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+            }
+        };
+
         ourHolder = getHolder();
         paint = new Paint();
-
         completed = false;
-
         restart();
     }
 
     public void pause() {
+        sensorManager.unregisterListener(gyroscopeEventListener);
         playing = false;
         try {
             gameThread.join();
@@ -72,6 +117,7 @@ class BreakoutEngine extends SurfaceView implements Runnable{
     }
 
     public void resume() {
+        sensorManager.registerListener(gyroscopeEventListener, gyroscopeSensor, SensorManager.SENSOR_DELAY_FASTEST);
         playing = true;
         gameThread = new Thread(this);
         gameThread.start();
@@ -254,6 +300,7 @@ class BreakoutEngine extends SurfaceView implements Runnable{
                 canvas.drawText(text, screenX/2 - bounds.width()/2,(int)(screenY*(0.65)), paint);
                 completed = true;
                 paused = true;
+                changed = false;
                 restart();
             }
 
@@ -272,6 +319,7 @@ class BreakoutEngine extends SurfaceView implements Runnable{
                 canvas.drawText(text, screenX/2 - bounds.width()/2,(int)(screenY*(0.65)), paint);
                 completed = true;
                 paused = true;
+                changed = false;
                 restart();
             }
 
@@ -294,6 +342,14 @@ class BreakoutEngine extends SurfaceView implements Runnable{
         switch (motionEvent.getAction() & MotionEvent.ACTION_MASK) {
 
             case MotionEvent.ACTION_DOWN:
+
+                if(!changed) {
+                    gyroscopeOnOff = MainActivity.gyroscopeOnOff;
+                    if(!gyroscopeOnOff){
+                        sensorManager.unregisterListener(gyroscopeEventListener);
+                    }
+                    changed = true;
+                }
 
                 if(completed)
                 {
