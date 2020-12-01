@@ -1,6 +1,7 @@
 package com.example.myapplication;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -10,6 +11,8 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.media.AudioManager;
+import android.media.SoundPool;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -27,12 +30,16 @@ class BreakoutEngine extends SurfaceView implements Runnable{
 
     private SurfaceHolder ourHolder;
 
+    private SoundPool soundPool;
+
     private volatile boolean playing;
     private boolean completed;
     private boolean gyroscopeOnOff = false;
     private boolean changed = false;
 
     private boolean paused = true;
+
+    public SharedPreferences sp;
 
     private Canvas canvas;
     private Paint paint;
@@ -51,6 +58,8 @@ class BreakoutEngine extends SurfaceView implements Runnable{
     int row, col;
     Brick bricks;
 
+    int score = 0;
+    int highScore = 0;
     int bricksCount;
 
     double sumY = 0;
@@ -102,7 +111,18 @@ class BreakoutEngine extends SurfaceView implements Runnable{
 
         ourHolder = getHolder();
         paint = new Paint();
+
+        soundPool = new SoundPool(2, AudioManager.STREAM_MUSIC,0);
+
         completed = false;
+
+        paddleWallSound = soundPool.load(context, R.raw.sound1, 1);
+        brickSound = soundPool.load(context, R.raw.sound2, 1);
+        winSound = soundPool.load(context, R.raw.sound4, 1);
+        loseSound = soundPool.load(context, R.raw.sound3, 1);
+
+        sp = context.getSharedPreferences("Score", Context.MODE_PRIVATE);
+
         restart();
     }
 
@@ -158,6 +178,8 @@ class BreakoutEngine extends SurfaceView implements Runnable{
 
             if(RectF.intersects(new RectF(ball.getposX(), ball.getposY(), ball.getposX() + ball.getSize(), ball.getposY() + ball.getSize()),paddle.GetRectangle())){
 
+                soundPool.play(paddleWallSound,1,1,1,0,1);
+
                 if(paddle.GetRectangle().left >= ball.getposX() + ball.getSize() - 1 && ball.getdirX() < 0){
                     ball.setDirY(Math.abs(ball.getdirY()));
                 }
@@ -182,14 +204,18 @@ class BreakoutEngine extends SurfaceView implements Runnable{
             }
 
             if (ball.getposX() < 0) {
+                soundPool.play(paddleWallSound,1,1,1,0,1);
                 ball.reverseX();
             }
 
             if (ball.getposY() < 150) {
+                soundPool.play(paddleWallSound,1,1,1,0,1);
                 ball.reverseY();
             }
 
             if (ball.getposX() + ball.getSize() >= screenX) {
+
+                soundPool.play(paddleWallSound,1,1,1,0,1);
                 ball.reverseX();
             }
 
@@ -205,7 +231,10 @@ class BreakoutEngine extends SurfaceView implements Runnable{
                         RectF brickRect = new RectF(rectF.left, rectF.top, rectF.right, rectF.bottom);
 
                         if (RectF.intersects(ballRect, brickRect)) {
+
                             bricksCount--;
+                            score += 10;
+                            soundPool.play(brickSound, 1, 1, 1, 0, 1);
 
                             if (ballRect.left + ballSize - 1 <= brickRect.left) {
                                 ball.reverseX();
@@ -248,6 +277,12 @@ class BreakoutEngine extends SurfaceView implements Runnable{
         {
             ball.setDirX(0);
             ball.setDirY(0);
+            soundPool.play(winSound,1,1,1,0,1);
+            if(score > highScore) {
+                SharedPreferences.Editor editor = sp.edit();
+                editor.putString("HighScore", Integer.toString(score));
+                editor.commit();
+            }
         }
     }
 
@@ -256,6 +291,8 @@ class BreakoutEngine extends SurfaceView implements Runnable{
         ball = new Ball((int) ((paddle.GetRectangle().left + paddle.getWidth() / 2) - 50 / 2),(int) paddle.GetRectangle().top - 80, ballSize);
         bricks = new Brick(row, col, screenX, screenY);
         bricksCount = row * col;
+        score = 0;
+        highScore = Integer.parseInt(sp.getString("HighScore","0"));
     }
 
     private void draw(){
@@ -274,6 +311,11 @@ class BreakoutEngine extends SurfaceView implements Runnable{
 
             paint.setColor(Color.argb(255,  255, 255, 255));
             canvas.drawRect(paddle.GetRectangle(), paint);
+
+            paint.setColor(Color.argb(255,  255, 255, 255));
+            paint.setTextSize(70);
+            canvas.drawText("Score: " + score, 20,100, paint);
+            canvas.drawText("High score: " + highScore, screenX - 490,100, paint);
 
             RectF rec = new RectF(ball.getposX(),ball.getposY(),ball.getposX() + ball.getSize(),ball.getposY() + ball.getSize());
             canvas.drawRect(rec, paint);
