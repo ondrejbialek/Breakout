@@ -8,3 +8,12 @@ Funkce:
 V zařízení se bude ukládat nejlepší dosažené skóre.
 Hra obsahuje zvukové efekty.
 Hru je možné ovládat gyroskopem nebo doteky na obrazovce. V menu je možnost zapnutí nebo vypnutí gyroskopu.
+
+Použité technologie:
+- Canvas, SurfaceView
+- Zvukové efekty
+- SharedPreferences
+- SQLite
+- Gyroskopický senzor
+- Thread
+- GUI: Listviews, Switch
