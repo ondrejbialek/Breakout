@@ -32,10 +32,10 @@ class BreakoutEngine extends SurfaceView implements Runnable{
 
     private SoundPool soundPool;
 
+    private DatabaseHelper dh;
+
     private volatile boolean playing;
     private boolean completed;
-    private boolean gyroscopeOnOff = false;
-    private boolean changed = false;
 
     private boolean paused = true;
 
@@ -69,45 +69,69 @@ class BreakoutEngine extends SurfaceView implements Runnable{
     int winSound;
     int loseSound;
 
+    String difficulty;
 
-    public BreakoutEngine(Context context, int x, int y) {
+    boolean gyroscopeEnabled;
+
+
+    public BreakoutEngine(Context context, int x, int y, String diff, boolean gyroscopeEn) {
 
         super(context);
 
         screenX = x;
         screenY = y;
 
-        row = 6;
-        col = 7;
-        bricksCount = row * col;
+        difficulty = diff;
 
-        sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
-
-        gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
-
-        if (gyroscopeSensor == null) {
-            Toast.makeText(context, "The device has no gyroscope!", Toast.LENGTH_SHORT).show();
+        switch(difficulty){
+            case "Easy":
+                row = 6;
+                col = 3;
+                break;
+            case "Normal":
+                row = 6;
+                col = 5;
+                break;
+            case "Hard":
+                row = 6;
+                col = 7;
+                break;
         }
 
-        gyroscopeEventListener = new SensorEventListener() {
-            @Override
-            public void onSensorChanged(SensorEvent event) {
-                if (event.values[2] > 0.5f) {
+        bricksCount = row * col;
 
-                    paddle.setDirection(paddle.left);
+        dh = new DatabaseHelper(context);
 
-                } else if (event.values[2] < -0.5f) {
+        gyroscopeEnabled = gyroscopeEn;
 
-                    paddle.setDirection(paddle.right);
+        if(gyroscopeEnabled) {
+            sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
+            gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+
+            if (gyroscopeSensor == null) {
+                Toast.makeText(context, "The device has no gyroscope!", Toast.LENGTH_SHORT).show();
+            }
+
+            gyroscopeEventListener = new SensorEventListener() {
+                @Override
+                public void onSensorChanged(SensorEvent event) {
+                    if (event.values[2] > 0.5f) {
+
+                        paddle.setDirection(paddle.left);
+
+                    } else if (event.values[2] < -0.5f) {
+
+                        paddle.setDirection(paddle.right);
+
+                    }
+                }
+
+                @Override
+                public void onAccuracyChanged(Sensor sensor, int accuracy) {
 
                 }
-            }
-
-            @Override
-            public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
-            }
-        };
+            };
+        }
 
         ourHolder = getHolder();
         paint = new Paint();
@@ -127,7 +151,9 @@ class BreakoutEngine extends SurfaceView implements Runnable{
     }
 
     public void pause() {
-        sensorManager.unregisterListener(gyroscopeEventListener);
+        if(gyroscopeEnabled) {
+            sensorManager.unregisterListener(gyroscopeEventListener);
+        }
         playing = false;
         try {
             gameThread.join();
@@ -137,7 +163,9 @@ class BreakoutEngine extends SurfaceView implements Runnable{
     }
 
     public void resume() {
-        sensorManager.registerListener(gyroscopeEventListener, gyroscopeSensor, SensorManager.SENSOR_DELAY_FASTEST);
+        if(gyroscopeEnabled) {
+            sensorManager.registerListener(gyroscopeEventListener, gyroscopeSensor, SensorManager.SENSOR_DELAY_FASTEST);
+        }
         playing = true;
         gameThread = new Thread(this);
         gameThread.start();
@@ -280,9 +308,21 @@ class BreakoutEngine extends SurfaceView implements Runnable{
             soundPool.play(winSound,1,1,1,0,1);
             if(score > highScore) {
                 SharedPreferences.Editor editor = sp.edit();
-                editor.putString("HighScore", Integer.toString(score));
-                editor.commit();
+                //editor.putString("HighScore", Integer.toString(score));
+                switch(difficulty){
+                    case "Easy":
+                        editor.putString("HighScoreEasy", Integer.toString(score));
+                        break;
+                    case "Normal":
+                        editor.putString("HighScoreNormal", Integer.toString(score));
+                        break;
+                    case "Hard":
+                        editor.putString("HighScoreHard", Integer.toString(score));
+                        break;
+                }
+                editor.apply();
             }
+            dh.insert(score, difficulty);
         }
     }
 
@@ -292,7 +332,22 @@ class BreakoutEngine extends SurfaceView implements Runnable{
         bricks = new Brick(row, col, screenX, screenY);
         bricksCount = row * col;
         score = 0;
-        highScore = Integer.parseInt(sp.getString("HighScore","0"));
+
+        String str = null;
+        switch(difficulty){
+            case "Easy":
+                str = sp.getString("HighScoreEasy","0");
+                break;
+            case "Normal":
+                str = sp.getString("HighScoreNormal","0");
+                break;
+            case "Hard":
+                str = sp.getString("HighScoreHard","0");
+                break;
+        }
+
+        if(str != null)
+            highScore = Integer.parseInt(str);
     }
 
     private void draw(){
@@ -342,7 +397,7 @@ class BreakoutEngine extends SurfaceView implements Runnable{
                 canvas.drawText(text, screenX/2 - bounds.width()/2,(int)(screenY*(0.65)), paint);
                 completed = true;
                 paused = true;
-                changed = false;
+                //changed = false;
                 restart();
             }
 
@@ -361,7 +416,7 @@ class BreakoutEngine extends SurfaceView implements Runnable{
                 canvas.drawText(text, screenX/2 - bounds.width()/2,(int)(screenY*(0.65)), paint);
                 completed = true;
                 paused = true;
-                changed = false;
+                //changed = false;
                 restart();
             }
 
@@ -384,14 +439,6 @@ class BreakoutEngine extends SurfaceView implements Runnable{
         switch (motionEvent.getAction() & MotionEvent.ACTION_MASK) {
 
             case MotionEvent.ACTION_DOWN:
-
-                if(!changed) {
-                    gyroscopeOnOff = MainActivity.gyroscopeOnOff;
-                    if(!gyroscopeOnOff){
-                        sensorManager.unregisterListener(gyroscopeEventListener);
-                    }
-                    changed = true;
-                }
 
                 if(completed)
                 {

@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#000000"
+    android:background="#FFFFFF"
     tools:context=".MainActivity">
 
     <TextView
@@ -13,15 +13,16 @@
         android:layout_height="wrap_content"
         android:fontFamily="sans-serif-smallcaps"
         android:text="BREAKOUT"
-        android:textColor="#FFFFFF"
+        android:textColor="#000000"
         android:textSize="60sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.496"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.193" />
+        app:layout_constraintVertical_bias="0.121" />
 
     <Button
         android:id="@+id/button"
@@ -29,34 +30,35 @@
         android:layout_width="280dp"
         android:layout_height="80dp"
         android:background="@drawable/bordered_button2"
-        android:text="Tap to start!"
-        android:textColor="#FFFFFF"
+        android:text="Start game"
+        android:textColor="#000000"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.496"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.7" />
+        app:layout_constraintVertical_bias="0.651" />
 
-    <TextView
-        android:id="@+id/textView2"
-        android:layout_width="92dp"
-        android:layout_height="30dp"
-        android:text="Gyroscope:"
-        android:textColor="#FFFFFF"
-        android:textSize="18sp"
+    <Button
+        android:id="@+id/button2"
+        style="@style/Widget.AppCompat.Button.Borderless.Colored"
+        android:layout_width="280dp"
+        android:layout_height="80dp"
+        android:background="@drawable/bordered_button2"
+        android:text="Highscores"
+        android:textColor="#000000"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.297"
+        app:layout_constraintHorizontal_bias="0.496"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.82" />
+        app:layout_constraintVertical_bias="0.788" />
 
     <Switch
         android:id="@+id/switch1"
         android:layout_width="84dp"
         android:layout_height="53dp"
-        android:textColor="#FFFFFF"
+        android:textColor="#000000"
         android:textOff="OFF"
         android:textOn="ON"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -64,7 +66,65 @@
         app:layout_constraintHorizontal_bias="0.755"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.828"
+        app:layout_constraintVertical_bias="0.886"
         tools:text="OFF" />
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="92dp"
+        android:layout_height="30dp"
+        android:text="Gyroscope:"
+        android:textColor="#000000"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.297"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.875" />
+
+    <RadioGroup
+        android:id="@+id/radioGroup1"
+        android:layout_width="140dp"
+        android:layout_height="136dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.497"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.441">
+
+        <RadioButton
+            android:id="@+id/radioButton3"
+            android:layout_width="140dp"
+            android:layout_height="45dp"
+            android:checked="true"
+            android:gravity="center|center_vertical"
+            android:onClick="radioButtonClick"
+            android:text="Easy"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <RadioButton
+            android:id="@+id/radioButton4"
+            android:layout_width="140dp"
+            android:layout_height="45dp"
+            android:gravity="center|center_vertical"
+            android:onClick="radioButtonClick"
+            android:text="Normal"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <RadioButton
+            android:id="@+id/radioButton5"
+            android:layout_width="140sp"
+            android:layout_height="45sp"
+            android:gravity="center|center_vertical"
+            android:onClick="radioButtonClick"
+            android:text="Hard"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+    </RadioGroup>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
